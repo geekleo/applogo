@@ -1,15 +1,5 @@
 {
   "framework": "nextjs",
   "regions": ["hnd1"],
-  "installCommand": "npm install --legacy-peer-deps",
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "DIRECT_URL": "@direct-url",
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "@clerk-publishable-key",
-    "CLERK_SECRET_KEY": "@clerk-secret-key",
-    "REPLICATE_API_TOKEN": "@replicate-token",
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key"
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }
