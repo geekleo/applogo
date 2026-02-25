@@ -1,5 +1,4 @@
 {
   "framework": "nextjs",
-  "regions": ["hnd1"],
-  "installCommand": "npm install --legacy-peer-deps"
+  "regions": ["hnd1"]
 }
