@@ -1,0 +1,156 @@
+// AppIcon - Prisma Schema
+// App 图标生成器数据模型
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// 用户表
+// ============================================
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String?
+  image         String?
+  
+  // 积分系统（可选）
+  credits       Int          @default(0)
+  
+  // 免费额度
+  freeCredits   Int          @default(1)    // 新用户默认 1 次免费
+  
+  // 关联
+  generations   Generation[]
+  payments      Payment[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+// ============================================
+// 图标生成任务
+// ============================================
+model Generation {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 输入信息
+  appName       String                         // App 名称
+  description   String                         // 一句话描述
+  style         String                         // minimal/gradient/pixel/3d/neon/handdrawn
+  
+  // 状态
+  status        GenerationStatus @default(pending)
+  error         String?                        // 错误信息
+  
+  // 生成结果
+  results       IconResult[]
+  selectedId    String?                        // 用户选择的图标 ID
+  
+  // 付费状态
+  paid          Boolean      @default(false)
+  paidAt        DateTime?
+  tier          String?                        // basic/pro
+  
+  // 关联支付
+  payment       Payment?
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// 生成状态枚举
+// ============================================
+enum GenerationStatus {
+  pending      // 等待处理
+  processing   // 处理中
+  completed    // 已完成
+  failed       // 失败
+}
+
+// ============================================
+// 单个图标结果
+// ============================================
+model IconResult {
+  id            String      @id @default(cuid())
+  generationId  String
+  generation    Generation  @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  
+  // 图片资源
+  imageUrl      String                       // 原图 URL（R2）
+  svgUrl        String?                      // SVG 矢量版 URL
+  thumbUrl      String?                      // 缩略图 URL
+  
+  // 生成参数
+  prompt        String                       // 使用的 prompt
+  seed          Int?                         // 随机种子（可复现）
+  
+  // 元数据
+  width         Int?                         // 图片宽度
+  height        Int?                         // 图片高度
+  
+  createdAt     DateTime    @default(now())
+
+  @@index([generationId])
+}
+
+// ============================================
+// 支付记录
+// ============================================
+model Payment {
+  id                      String    @id @default(cuid())
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Stripe 支付信息
+  stripePaymentIntentId   String?   @unique
+  stripeCheckoutSessionId String?   @unique
+  
+  // 金额（分）
+  amount                  Int
+  currency                String    @default("usd")
+  
+  // 支付状态
+  status                  PaymentStatus @default(pending)
+  
+  // 关联的生成任务
+  generationId            String?    @unique
+  generation              Generation?  @relation(fields: [generationId], references: [id])
+  
+  // 套餐信息
+  tier                    String?                     // basic/pro
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// 支付状态枚举
+// ============================================
+enum PaymentStatus {
+  pending       // 待支付
+  processing    // 处理中
+  succeeded     // 成功
+  failed        // 失败
+  canceled      // 已取消
+  refunded      // 已退款
+}

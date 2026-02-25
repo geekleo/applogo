@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String?
+  image         String?
+  credits       Int          @default(0)
+  freeCredits   Int          @default(1)
+  generations   Generation[]
+  payments      Payment[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Generation {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appName       String
+  description   String
+  style         String
+  status        GenerationStatus   @default(pending)
+  error         String?
+  results       IconResult[]
+  selectedId    String?
+  paid          Boolean            @default(false)
+  paidAt        DateTime?
+  tier          String?
+  payment       Payment?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum GenerationStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model IconResult {
+  id            String     @id @default(cuid())
+  generationId  String
+  generation    Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  imageUrl      String
+  svgUrl        String?
+  thumbUrl      String?
+  prompt        String
+  seed          Int?
+  width         Int?
+  height        Int?
+  createdAt     DateTime   @default(now())
+
+  @@index([generationId])
+}
+
+model Payment {
+  id                      String     @id @default(cuid())
+  userId                  String
+  user                    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripePaymentIntentId   String?    @unique
+  stripeCheckoutSessionId String?    @unique
+  amount                  Int
+  currency                String     @default("usd")
+  status                  PaymentStatus @default(pending)
+  generationId            String?    @unique
+  generation              Generation? @relation(fields: [generationId], references: [id])
+  tier                    String?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  succeeded
+  failed
+  canceled
+  refunded
+}
