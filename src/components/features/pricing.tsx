@@ -64,84 +64,67 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-20">
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            简单透明的定价
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            一次付费，永久使用。无需订阅。
-          </p>
-        </div>
-
-        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={cn(
-                'relative rounded-2xl border p-6 transition-all',
-                plan.popular
-                  ? 'border-primary shadow-lg ring-1 ring-primary/20'
-                  : 'hover:border-primary/50'
-              )}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                    <Sparkles className="h-3 w-3" />
-                    最受欢迎
-                  </span>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-
-              <div className="mb-6">
-                <span className="text-4xl font-bold">${plan.price}</span>
-                {plan.price > 0 && (
-                  <span className="text-muted-foreground">/次</span>
-                )}
-              </div>
-
-              <ul className="mb-6 space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-                {plan.notIncluded.map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-start gap-2 text-sm text-muted-foreground line-through"
-                  >
-                    <span className="opacity-0">
-                      <Check className="h-4 w-4" />
-                    </span>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                variant={plan.buttonVariant}
-                className="w-full"
-                disabled={plan.id === 'free'}
-              >
-                {plan.buttonText}
-              </Button>
+    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3">
+      {plans.map((plan) => (
+        <div
+          key={plan.id}
+          className={cn(
+            'relative rounded-2xl border p-6 transition-all',
+            plan.popular
+              ? 'border-primary shadow-lg ring-1 ring-primary/20'
+              : 'hover:border-primary/50'
+          )}
+        >
+          {plan.popular && (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                <Sparkles className="h-3 w-3" />
+                最受欢迎
+              </span>
             </div>
-          ))}
-        </div>
+          )}
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          支持 Stripe 安全支付 · 生成后不满意可申请退款
-        </p>
-      </div>
-    </section>
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold">{plan.name}</h3>
+            <p className="text-sm text-muted-foreground">{plan.description}</p>
+          </div>
+
+          <div className="mb-6">
+            <span className="text-4xl font-bold">${plan.price}</span>
+            {plan.price > 0 && (
+              <span className="text-muted-foreground">/次</span>
+            )}
+          </div>
+
+          <ul className="mb-6 space-y-3">
+            {plan.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>{feature}</span>
+              </li>
+            ))}
+            {plan.notIncluded.map((feature) => (
+              <li
+                key={feature}
+                className="flex items-start gap-2 text-sm text-muted-foreground line-through"
+              >
+                <span className="opacity-0">
+                  <Check className="h-4 w-4" />
+                </span>
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          <Button
+            variant={plan.buttonVariant}
+            className="w-full"
+            disabled={plan.id === 'free'}
+          >
+            {plan.buttonText}
+          </Button>
+        </div>
+      ))}
+    </div>
   )
 }

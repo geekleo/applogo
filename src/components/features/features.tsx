@@ -38,34 +38,21 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="border-t bg-muted/30 py-20">
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            为什么选择 AppIcon？
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            专为独立开发者打造，让你的 App 拥有专业级图标
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {features.map((feature) => (
+        <div
+          key={feature.title}
+          className="group rounded-xl border bg-background p-6 transition-all hover:shadow-lg"
+        >
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <feature.icon className="h-6 w-6" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+          <p className="text-sm text-muted-foreground">
+            {feature.description}
           </p>
         </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group rounded-xl border bg-background p-6 transition-all hover:shadow-lg"
-            >
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <feature.icon className="h-6 w-6" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      ))}
+    </div>
   )
 }
