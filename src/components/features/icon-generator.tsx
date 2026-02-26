@@ -91,7 +91,7 @@ export function IconGenerator() {
 
   // 轮询生成状态
   const pollGenerationStatus = async (id: string) => {
-    const maxAttempts = 60 // 最多等待 2 分钟
+    const maxAttempts = 90 // 最多等待 3 分钟
     let attempts = 0
 
     const poll = async () => {
@@ -99,7 +99,10 @@ export function IconGenerator() {
         const response = await fetch(`/api/generate/${id}`)
         const data: GenerationResult = await response.json()
 
+        console.log(`Poll attempt ${attempts + 1}: status=${data.status}`)
+
         if (data.status === 'completed') {
+          console.log('Generation completed, results:', data.results.length)
           setResults(data.results)
           setIsGenerating(false)
           return
@@ -114,18 +117,22 @@ export function IconGenerator() {
         // 继续轮询
         attempts++
         if (attempts < maxAttempts) {
-          setTimeout(poll, 2000)
+          // 首次延迟 3 秒，之后每 2 秒轮询一次
+          const delay = attempts === 1 ? 3000 : 2000
+          setTimeout(poll, delay)
         } else {
           setError('生成超时，请稍后重试')
           setIsGenerating(false)
         }
-      } catch (err) {
-        setError('查询状态失败')
+      } catch (err: any) {
+        console.error('Poll error:', err)
+        setError('查询状态失败：' + err.message)
         setIsGenerating(false)
       }
     }
 
-    poll()
+    // 首次轮询延迟 2 秒
+    setTimeout(poll, 2000)
   }
 
   return (
