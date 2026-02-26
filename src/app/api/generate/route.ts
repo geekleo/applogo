@@ -49,6 +49,13 @@ export async function POST(request: NextRequest) {
         },
         select: { freeCredits: true },
       })
+    } else if (dbUser.freeCredits <= 0) {
+      // 已有用户但没有免费额度，赠送 1 次（用于测试）
+      dbUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { freeCredits: 1 },
+        select: { freeCredits: true },
+      })
     }
 
     // 检查免费额度
