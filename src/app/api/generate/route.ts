@@ -139,7 +139,6 @@ async function generateIconsAsync(
           // 生成图标
           const { imageUrl, seed } = await generateIcon({
             prompt: p.prompt,
-            negativePrompt: p.negativePrompt,
           })
 
           console.log(`Icon ${index + 1} generated: ${imageUrl}`)
