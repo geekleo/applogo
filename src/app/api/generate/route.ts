@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { currentUser } from '@clerk/nextjs/server'
 import { buildPromptVariations } from '@/prompts'
-import { generateIcon } from '@/lib/image-generator'
+import { generateIcon } from '@/lib/openrouter'
 import { uploadToStorage, getIconPath } from '@/lib/supabase'
 import type { IconStyle } from '@/types'
 
