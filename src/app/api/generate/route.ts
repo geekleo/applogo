@@ -31,15 +31,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 检查用户免费额度
-    const dbUser = await prisma.user.findUnique({
+    // 获取或创建用户记录
+    let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { freeCredits: true },
     })
 
-    if (!dbUser || dbUser.freeCredits <= 0) {
+    // 如果用户不存在，创建新用户（送 1 次免费）
+    if (!dbUser) {
+      dbUser = await prisma.user.create({
+        data: {
+          id: user.id,
+          email: user.emailAddresses[0]?.emailAddress || '',
+          name: user.firstName || user.username || '',
+          image: user.imageUrl,
+          freeCredits: 1,
+        },
+        select: { freeCredits: true },
+      })
+    }
+
+    // 检查免费额度
+    if (dbUser.freeCredits <= 0) {
       return NextResponse.json(
-        { error: 'No free credits remaining', requiresPayment: true },
+        { error: 'No free credits remaining', requiresPayment: true, message: '免费额度已用完，请升级' },
         { status: 402 }
       )
     }
