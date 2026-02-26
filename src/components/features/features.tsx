@@ -39,7 +39,7 @@ const features = [
 export function Features() {
   return (
     <section id="features" className="border-t bg-muted/30 py-20">
-      <div className="container px-4 md:px-6">
+      <div className="container mx-auto max-w-7xl px-4 md:px-6">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
             为什么选择 AppIcon？

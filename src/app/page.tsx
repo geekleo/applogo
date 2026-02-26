@@ -16,7 +16,7 @@ export default function Home() {
       <Hero />
       
       {/* Main Generator */}
-      <section id="generator" className="container py-16 px-4 md:px-6">
+      <section id="generator" className="container mx-auto max-w-7xl py-16 px-4 md:px-6">
         <IconGenerator />
       </section>
       

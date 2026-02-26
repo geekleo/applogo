@@ -5,7 +5,7 @@ import { Sparkles, Zap, Download } from 'lucide-react'
 
 export function Hero() {
   return (
-    <section className="container flex flex-col items-center justify-center gap-6 py-20 px-4 text-center md:py-32 md:px-6">
+    <section className="container mx-auto max-w-7xl flex flex-col items-center justify-center gap-6 py-20 px-4 text-center md:py-32 md:px-6">
       {/* Badge */}
       <div className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-1.5 text-sm">
         <Sparkles className="h-4 w-4" />
