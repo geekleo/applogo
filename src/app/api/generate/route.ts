@@ -80,19 +80,82 @@ export async function POST(request: NextRequest) {
     // 构建 Prompt 变体
     const prompts = buildPromptVariations(appName, description, style as IconStyle, 4)
 
-    // 启动异步生成任务
-    generateIconsAsync(generation.id, prompts, user.id)
-
     // 扣除免费额度
     await prisma.user.update({
       where: { id: user.id },
       data: { freeCredits: dbUser.freeCredits - 1 },
     })
 
+    // 同步生成图标（OpenRouter 是同步返回）
+    console.log(`Starting synchronous generation for ${generation.id}`)
+    
+    // 更新状态为 processing
+    await prisma.generation.update({
+      where: { id: generation.id },
+      data: { status: 'processing' },
+    })
+
+    try {
+      // 生成所有图标
+      const results = await Promise.all(
+        prompts.map(async (p, index) => {
+          console.log(`Generating icon ${index + 1}/${prompts.length}`)
+          
+          // 生成图标
+          const { imageUrl, seed } = await generateIcon({
+            prompt: p.prompt,
+          })
+
+          console.log(`Icon ${index + 1} generated`)
+
+          // OpenRouter 返回的是 base64 data URL，直接使用
+          // 如果需要保存到 Storage，可以取消下面的注释
+          /*
+          const response = await fetch(imageUrl)
+          const buffer = Buffer.from(await response.arrayBuffer())
+          const storagePath = getIconPath(generation.id, index)
+          const storageUrl = await uploadToStorage(buffer, storagePath)
+          */
+
+          return {
+            generationId: generation.id,
+            imageUrl: imageUrl, // OpenRouter 返回 base64 data URL
+            svgUrl: null,
+            thumbUrl: null,
+            prompt: p.prompt,
+            seed,
+          }
+        })
+      )
+
+      // 保存结果
+      await prisma.iconResult.createMany({
+        data: results,
+      })
+
+      // 更新状态为 completed
+      await prisma.generation.update({
+        where: { id: generation.id },
+        data: { status: 'completed' },
+      })
+
+      console.log(`Generation ${generation.id} completed successfully`)
+    } catch (error: any) {
+      console.error('Generation failed:', error)
+      await prisma.generation.update({
+        where: { id: generation.id },
+        data: {
+          status: 'failed',
+          error: error.message || '生成失败',
+        },
+      })
+      throw error
+    }
+
     return NextResponse.json({
       success: true,
       generationId: generation.id,
-      estimatedTime: 15, // 预估 15 秒
+      estimatedTime: 15,
     })
   } catch (error: any) {
     console.error('Generate API error:', error)
