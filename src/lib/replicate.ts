@@ -8,12 +8,12 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN || '',
 })
 
-// 模型配置 - 使用免费模型
-// 免费模型列表：https://replicate.com/pricing
-const FLUX_MODEL = 'black-forest-labs/flux-1.1-pro' // 高质量，有免费额度
-// const FLUX_MODEL = 'google/imagen-3' // 谷歌模型
-// const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 快速版
-// const FLUX_MODEL = 'ideogram-ai/ideogram-v2' // 适合文字
+// 模型配置 - 使用有免费额度的模型
+// Replicate 免费模型：https://replicate.com/pricing
+// 新用户有 $5 免费额度，可以使用任何模型
+const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 快速，便宜，有免费额度
+// const FLUX_MODEL = 'black-forest-labs/flux-1.1-pro' // 高质量
+// const FLUX_MODEL = 'stability-ai/sdxl' // 免费模型之一
 
 export interface GenerateIconOptions {
   prompt: string
@@ -29,7 +29,8 @@ export interface GenerateIconResult {
 }
 
 /**
- * 使用 Flux 1.1 Pro 模型生成图标（有免费额度）
+ * 使用 Flux Schnell 模型生成图标（快速且便宜）
+ * 新用户有$5免费额度，可以生成约600次
  */
 export async function generateIcon(
   options: GenerateIconOptions
@@ -44,9 +45,8 @@ export async function generateIcon(
       {
         input: {
           prompt,
-          negative_prompt: negativePrompt || '',
-          aspect_ratio: '1:1',
-          output_format: 'png',
+          prompt_strength: 0.8,
+          num_inference_steps: 4, // Schnell 只需要 4 步，很快
           seed: seedValue,
         },
       }
@@ -65,8 +65,8 @@ export async function generateIcon(
     if (error.message?.includes('timeout')) {
       throw new Error('生成超时，请稍后重试')
     }
-    if (error.message?.includes('billing') || error.message?.includes('credits')) {
-      throw new Error('Replicate API 余额不足，请充值')
+    if (error.message?.includes('billing') || error.message?.includes('credits') || error.message?.includes('balance')) {
+      throw new Error('Replicate API 余额不足，请充值：https://replicate.com/account/billing')
     }
     
     throw new Error(`生成失败：${error.message}`)
