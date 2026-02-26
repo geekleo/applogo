@@ -131,41 +131,43 @@ export function IconGenerator() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="rounded-2xl border bg-card p-6 shadow-lg md:p-8">
-        <h2 className="mb-6 text-2xl font-bold">生成你的 App 图标</h2>
+        <h2 className="mb-6 text-2xl font-bold text-center">生成你的 App 图标</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* App 名称 */}
           <div className="space-y-2">
-            <Label htmlFor="appName">App 名称</Label>
+            <Label htmlFor="appName" className="text-center block">App 名称</Label>
             <Input
               id="appName"
               placeholder="例如：健康日记、记账本、日程助手"
               {...register('appName')}
               disabled={isGenerating}
+              className="max-w-2xl mx-auto block"
             />
             {errors.appName && (
-              <p className="text-sm text-destructive">{errors.appName.message}</p>
+              <p className="text-sm text-destructive text-center">{errors.appName.message}</p>
             )}
           </div>
 
           {/* 一句话描述 */}
           <div className="space-y-2">
-            <Label htmlFor="description">一句话描述</Label>
+            <Label htmlFor="description" className="text-center block">一句话描述</Label>
             <Textarea
               id="description"
               placeholder="描述你的 App 是做什么的，例如：一款帮助用户记录每日健康数据的生活工具"
               rows={3}
               {...register('description')}
               disabled={isGenerating}
+              className="max-w-2xl mx-auto block"
             />
             {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
+              <p className="text-sm text-destructive text-center">{errors.description.message}</p>
             )}
           </div>
 
           {/* 风格选择 */}
           <div className="space-y-3">
-            <Label>选择风格</Label>
+            <Label className="text-center block">选择风格</Label>
             <StyleSelector
               styles={ICON_STYLES}
               selected={selectedStyle}
@@ -179,29 +181,31 @@ export function IconGenerator() {
           </div>
 
           {/* 提交按钮 */}
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-5 w-5" />
-                生成图标
-              </>
-            )}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              type="submit"
+              size="lg"
+              className="min-w-[200px]"
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  生成图标
+                </>
+              )}
+            </Button>
+          </div>
         </form>
 
         {/* 错误提示 */}
         {error && (
-          <div className="mt-4 rounded-lg bg-destructive/10 p-4 text-center text-destructive">
+          <div className="mt-4 rounded-lg bg-destructive/10 p-4 text-center text-destructive max-w-2xl mx-auto">
             {error}
           </div>
         )}
