@@ -49,8 +49,6 @@ export async function generateIcon(
           output_format: 'png',
           seed: seedValue,
         },
-        // 增加超时时间
-        timeout: 60000, // 60 秒
       }
     ) as string[]
 
