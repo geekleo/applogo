@@ -1,7 +1,7 @@
 // src/lib/openrouter.ts
-// OpenRouter API 集成
-// 文档：https://openrouter.ai/docs
-// 图像生成：https://openrouter.ai/docs/images
+// Stability AI 官方 API 集成
+// 文档：https://platform.stability.ai/docs/api-reference
+// 价格：https://stability.ai/pricing
 
 export interface GenerateIconOptions {
   prompt: string
@@ -14,9 +14,8 @@ export interface GenerateIconResult {
 }
 
 /**
- * 使用 OpenRouter + Stability AI SDXL 生成图标
- * 价格：$0.002/张（约￥0.014）
- * 文档：https://openrouter.ai/docs/images
+ * 使用 Stability AI SDXL 生成图标
+ * 通过 Stability AI 官方 API
  */
 export async function generateIcon(
   options: GenerateIconOptions
@@ -24,85 +23,75 @@ export async function generateIcon(
   const { prompt, seed } = options
   const seedValue = seed ?? Math.floor(Math.random() * 1000000)
 
-  const apiKey = process.env.OPENROUTER_API_KEY
+  // 优先使用 Stability AI API Key，如果没有则使用 OpenRouter
+  const stabilityApiKey = process.env.STABILITY_API_KEY
+  const openRouterKey = process.env.OPENROUTER_API_KEY
+  
+  const apiKey = stabilityApiKey || openRouterKey
   
   if (!apiKey) {
-    throw new Error('OpenRouter API Key 未配置')
+    throw new Error('Stability AI API Key 或 OpenRouter API Key 未配置')
   }
 
   try {
-    console.log('Calling OpenRouter API with prompt:', prompt.substring(0, 100))
+    console.log('Calling Stability AI API with prompt:', prompt.substring(0, 100))
 
-    // OpenRouter 图像生成 API
-    const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+    // Stability AI 官方 API
+    const response = await fetch('https://api.stability.ai/v2beta/stable-image/generate/sdxl', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://applogo.vercel.app',
-        'X-Title': 'AppIcon',
+        'Accept': 'image/*',
       },
       body: JSON.stringify({
-        model: 'stability-ai/stable-diffusion-xl',
         prompt: prompt,
+        output_format: 'png',
+        seed: seedValue,
+        mode: 'text-to-image',
         width: 1024,
         height: 1024,
-        seed: seedValue,
-        response_format: 'url',
-        n: 1,
       }),
     })
 
-    console.log('OpenRouter API response status:', response.status)
+    console.log('Stability AI API response status:', response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('OpenRouter API error response:', errorText)
+      console.error('Stability AI API error response:', errorText)
       
-      // 尝试解析 JSON 错误
       try {
         const errorJson = JSON.parse(errorText)
-        throw new Error(`OpenRouter API 错误 (${response.status}): ${errorJson.error?.message || errorText}`)
+        throw new Error(`Stability AI API 错误 (${response.status}): ${errorJson.message || errorText}`)
       } catch {
-        throw new Error(`OpenRouter API 错误 (${response.status}): ${errorText.substring(0, 500)}`)
+        throw new Error(`Stability AI API 错误 (${response.status}): ${errorText.substring(0, 500)}`)
       }
     }
 
-    const data = await response.json()
-    console.log('OpenRouter response data:', JSON.stringify(data, null, 2))
+    // Stability AI 返回的是图片二进制数据
+    const imageBuffer = await response.arrayBuffer()
+    const base64Image = Buffer.from(imageBuffer).toString('base64')
     
-    // OpenRouter 图像生成返回格式
-    // {
-    //   "data": [
-    //     {
-    //       "url": "https://..."
-    //     }
-    //   ]
-    // }
-    const imageUrl = data.data?.[0]?.url || data.data?.[0]?.image_url
-
-    if (!imageUrl) {
-      console.error('OpenRouter response:', data)
-      throw new Error('未返回图片 URL，请检查 OpenRouter 配置和模型是否可用')
-    }
+    // 返回 base64 格式的 data URL
+    const imageUrl = `data:image/png;base64,${base64Image}`
 
     return {
       imageUrl,
       seed: seedValue,
     }
   } catch (error: any) {
-    console.error('OpenRouter API error:', error)
+    console.error('Stability AI API error:', error)
     
     if (error.message?.includes('billing') || error.message?.includes('credits') || error.message?.includes('balance')) {
-      throw new Error('OpenRouter 余额不足，请充值：https://openrouter.ai/credits')
+      throw new Error('Stability AI 余额不足，请充值')
     }
     
     if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-      throw new Error('OpenRouter API Key 无效，请检查配置')
+      throw new Error('Stability AI API Key 无效')
     }
     
     if (error.message?.includes('404')) {
-      throw new Error('OpenRouter API endpoint 不存在')
+      throw new Error('Stability AI API endpoint 不存在')
     }
     
     throw new Error(`生成失败：${error.message}`)
