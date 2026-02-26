@@ -1,6 +1,6 @@
 // src/lib/openrouter.ts
-// OpenRouter API 集成
-// 文档：https://openrouter.ai/docs
+// OpenRouter 图像生成 API
+// 文档：https://openrouter.ai/docs/guides/overview/multimodal/image-generation
 
 export interface GenerateIconOptions {
   prompt: string
@@ -13,9 +13,8 @@ export interface GenerateIconResult {
 }
 
 /**
- * 使用 OpenRouter 调用图像生成模型
- * OpenRouter 主要提供文本模型，图像生成需要通过特定模型
- * 文档：https://openrouter.ai/models?category=image-generation
+ * 使用 OpenRouter 生成图标
+ * 支持 Flux 等图像生成模型
  */
 export async function generateIcon(
   options: GenerateIconOptions
@@ -32,7 +31,7 @@ export async function generateIcon(
   try {
     console.log('Calling OpenRouter API with prompt:', prompt.substring(0, 100))
 
-    // OpenRouter 标准 API endpoint
+    // OpenRouter 图像生成 API - 使用正确的 endpoint 和参数
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -42,17 +41,17 @@ export async function generateIcon(
         'X-Title': 'AppIcon',
       },
       body: JSON.stringify({
-        // 使用支持图像生成的模型
-        // OpenRouter 上的图像生成模型列表：https://openrouter.ai/models?category=image-generation
-        model: 'stability-ai/stable-diffusion-xl',
+        // 使用 Flux 模型（支持图像生成）
+        model: 'black-forest-labs/flux.2-pro',
         messages: [
           {
             role: 'user',
             content: prompt,
           },
         ],
-        // 请求图像输出
-        response_format: { type: 'image_url' },
+        // 关键：指定输出模态为图像
+        modalities: ['image'],
+        seed: seedValue,
       }),
     })
 
@@ -73,13 +72,31 @@ export async function generateIcon(
     const data = await response.json()
     console.log('OpenRouter response:', JSON.stringify(data, null, 2))
     
-    // OpenRouter 返回格式
-    const imageUrl = data.choices?.[0]?.message?.content || 
-                     data.choices?.[0]?.image_url?.url
-
-    if (!imageUrl || !imageUrl.startsWith('http')) {
+    // OpenRouter 图像生成返回格式
+    // {
+    //   "choices": [{
+    //     "message": {
+    //       "role": "assistant",
+    //       "images": [{
+    //         "type": "image_url",
+    //         "image_url": {
+    //           "url": "data:image/png;base64,..."
+    //         }
+    //       }]
+    //     }
+    //   }]
+    // }
+    const images = data.choices?.[0]?.message?.images
+    
+    if (!images || images.length === 0) {
       console.error('OpenRouter response:', data)
-      throw new Error('未返回有效的图片 URL，OpenRouter 可能不支持该模型')
+      throw new Error('未返回图片，请检查模型是否支持图像生成')
+    }
+
+    const imageUrl = images[0].image_url?.url
+
+    if (!imageUrl) {
+      throw new Error('未返回有效的图片 URL')
     }
 
     return {
