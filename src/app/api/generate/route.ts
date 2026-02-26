@@ -148,8 +148,14 @@ async function generateIconsAsync(
             prompt: p.prompt,
             seed,
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Failed to generate icon ${index}:`, error)
+          
+          // 检查是否是余额不足
+          if (error.message?.includes('billing') || error.message?.includes('credits')) {
+            throw new Error('Replicate API 余额不足，请充值后重试')
+          }
+          
           // 返回占位图
           return {
             generationId,
