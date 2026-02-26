@@ -8,9 +8,12 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN || '',
 })
 
-// Flux 模型配置
-const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 快速版
-// const FLUX_MODEL = 'black-forest-labs/flux-pro' // 高质量版
+// 模型配置 - 使用免费模型
+// 免费模型列表：https://replicate.com/pricing
+const FLUX_MODEL = 'google/imagen-4' // 免费！谷歌最新模型
+// const FLUX_MODEL = 'black-forest-labs/flux-1.1-pro' // 付费，高质量
+// const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 付费，快速
+// const FLUX_MODEL = 'ideogram-ai/ideogram-v3-turbo' // 免费，适合文字
 
 export interface GenerateIconOptions {
   prompt: string
@@ -26,12 +29,12 @@ export interface GenerateIconResult {
 }
 
 /**
- * 使用 Flux 模型生成图标
+ * 使用 Google Imagen 4 模型生成图标（免费）
  */
 export async function generateIcon(
   options: GenerateIconOptions
 ): Promise<GenerateIconResult> {
-  const { prompt, negativePrompt, seed, width = 1024, height = 1024 } = options
+  const { prompt, negativePrompt, seed } = options
 
   const seedValue = seed ?? Math.floor(Math.random() * 1000000)
 
@@ -42,12 +45,8 @@ export async function generateIcon(
         input: {
           prompt,
           negative_prompt: negativePrompt || '',
-          width,
-          height,
           num_outputs: 1,
           seed: seedValue,
-          output_format: 'png',
-          output_quality: 100,
         },
       }
     ) as string[]
@@ -58,9 +57,9 @@ export async function generateIcon(
       imageUrl,
       seed: seedValue,
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Replicate API error:', error)
-    throw new Error('Failed to generate icon')
+    throw new Error(`Failed to generate icon: ${error.message}`)
   }
 }
 
