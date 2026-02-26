@@ -87,8 +87,9 @@ export async function POST(request: NextRequest) {
       generationId: generation.id,
       estimatedTime: 15, // 预估 15 秒
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Generate API error:', error)
+    console.error('Error details:', error.message, error.stack)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -98,7 +99,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: error.message || '生成失败，请稍后重试',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }
@@ -117,22 +121,32 @@ async function generateIconsAsync(
       data: { status: 'processing' },
     })
 
+    console.log(`Starting generation for ${generationId} with ${prompts.length} prompts`)
+
     // 调用 Replicate API 生成图标
     const results = await Promise.all(
       prompts.map(async (p, index) => {
         try {
+          console.log(`Generating icon ${index + 1}/${prompts.length}`)
+          
           // 生成图标
           const { imageUrl, seed } = await generateIcon({
             prompt: p.prompt,
             negativePrompt: p.negativePrompt,
           })
 
+          console.log(`Icon ${index + 1} generated: ${imageUrl}`)
+
           // 下载图片
           const response = await fetch(imageUrl)
+          if (!response.ok) {
+            throw new Error(`Failed to download image: ${response.status} ${response.statusText}`)
+          }
           const buffer = Buffer.from(await response.arrayBuffer())
 
           // 上传到 Supabase Storage
           const storagePath = getIconPath(generationId, index)
+          console.log(`Uploading to storage: ${storagePath}`)
           const storageUrl = await uploadToStorage(buffer, storagePath)
 
           // 生成缩略图
@@ -150,21 +164,15 @@ async function generateIconsAsync(
           }
         } catch (error: any) {
           console.error(`Failed to generate icon ${index}:`, error)
+          console.error('Error stack:', error.stack)
           
           // 检查是否是余额不足
-          if (error.message?.includes('billing') || error.message?.includes('credits')) {
+          if (error.message?.includes('billing') || error.message?.includes('credits') || error.message?.includes('balance')) {
             throw new Error('Replicate API 余额不足，请充值后重试')
           }
           
-          // 返回占位图
-          return {
-            generationId,
-            imageUrl: `https://via.placeholder.com/512?text=Error+${index + 1}`,
-            svgUrl: null,
-            thumbUrl: null,
-            prompt: p.prompt,
-            seed: 0,
-          }
+          // 返回更详细的错误
+          throw error
         }
       })
     )
@@ -179,8 +187,11 @@ async function generateIconsAsync(
       where: { id: generationId },
       data: { status: 'completed' },
     })
-  } catch (error) {
+    
+    console.log(`Generation ${generationId} completed successfully`)
+  } catch (error: any) {
     console.error('Generate icons error:', error)
+    console.error('Error stack:', error.stack)
     
     // 更新状态为 failed
     await prisma.generation.update({
