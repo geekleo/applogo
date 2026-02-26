@@ -10,10 +10,10 @@ const replicate = new Replicate({
 
 // 模型配置 - 使用免费模型
 // 免费模型列表：https://replicate.com/pricing
-const FLUX_MODEL = 'google/imagen-4' // 免费！谷歌最新模型
-// const FLUX_MODEL = 'black-forest-labs/flux-1.1-pro' // 付费，高质量
-// const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 付费，快速
-// const FLUX_MODEL = 'ideogram-ai/ideogram-v3-turbo' // 免费，适合文字
+const FLUX_MODEL = 'black-forest-labs/flux-1.1-pro' // 高质量，有免费额度
+// const FLUX_MODEL = 'google/imagen-3' // 谷歌模型
+// const FLUX_MODEL = 'black-forest-labs/flux-schnell' // 快速版
+// const FLUX_MODEL = 'ideogram-ai/ideogram-v2' // 适合文字
 
 export interface GenerateIconOptions {
   prompt: string
@@ -29,7 +29,7 @@ export interface GenerateIconResult {
 }
 
 /**
- * 使用 Google Imagen 4 模型生成图标（免费）
+ * 使用 Flux 1.1 Pro 模型生成图标（有免费额度）
  */
 export async function generateIcon(
   options: GenerateIconOptions
@@ -45,9 +45,12 @@ export async function generateIcon(
         input: {
           prompt,
           negative_prompt: negativePrompt || '',
-          num_outputs: 1,
+          aspect_ratio: '1:1',
+          output_format: 'png',
           seed: seedValue,
         },
+        // 增加超时时间
+        timeout: 60000, // 60 秒
       }
     ) as string[]
 
@@ -59,7 +62,16 @@ export async function generateIcon(
     }
   } catch (error: any) {
     console.error('Replicate API error:', error)
-    throw new Error(`Failed to generate icon: ${error.message}`)
+    
+    // 更详细的错误信息
+    if (error.message?.includes('timeout')) {
+      throw new Error('生成超时，请稍后重试')
+    }
+    if (error.message?.includes('billing') || error.message?.includes('credits')) {
+      throw new Error('Replicate API 余额不足，请充值')
+    }
+    
+    throw new Error(`生成失败：${error.message}`)
   }
 }
 
