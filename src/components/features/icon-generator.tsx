@@ -92,19 +92,27 @@ export function IconGenerator() {
   // 轮询生成状态
   const pollGenerationStatus = async (id: string) => {
     const maxAttempts = 90 // 最多等待 3 分钟
-    let attempts = 0
-
-    const poll = async () => {
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
+        console.log(`Poll attempt ${attempt + 1}/${maxAttempts}`)
+        
         const response = await fetch(`/api/generate/${id}`)
         const data: GenerationResult = await response.json()
 
-        console.log(`Poll attempt ${attempts + 1}: status=${data.status}`)
+        console.log(`Status: ${data.status}`, data)
 
         if (data.status === 'completed') {
-          console.log('Generation completed, results:', data.results.length)
+          console.log('Generation completed! Results:', data.results)
           setResults(data.results)
           setIsGenerating(false)
+          // 滚动到结果区域
+          setTimeout(() => {
+            document.getElementById('result-section')?.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            })
+          }, 100)
           return
         }
 
@@ -114,25 +122,19 @@ export function IconGenerator() {
           return
         }
 
-        // 继续轮询
-        attempts++
-        if (attempts < maxAttempts) {
-          // 首次延迟 3 秒，之后每 2 秒轮询一次
-          const delay = attempts === 1 ? 3000 : 2000
-          setTimeout(poll, delay)
-        } else {
-          setError('生成超时，请稍后重试')
-          setIsGenerating(false)
-        }
+        // 等待 2 秒后继续轮询
+        await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (err: any) {
         console.error('Poll error:', err)
         setError('查询状态失败：' + err.message)
         setIsGenerating(false)
+        return
       }
     }
-
-    // 首次轮询延迟 2 秒
-    setTimeout(poll, 2000)
+    
+    // 超时
+    setError('生成超时，请稍后重试')
+    setIsGenerating(false)
   }
 
   return (
@@ -219,7 +221,7 @@ export function IconGenerator() {
 
         {/* 生成结果 */}
         {results.length > 0 && (
-          <div className="mt-8 space-y-6">
+          <div id="result-section" className="mt-8 space-y-6">
             <h3 className="text-xl font-semibold">选择你喜欢的图标</h3>
             <IconGrid
               icons={results}
