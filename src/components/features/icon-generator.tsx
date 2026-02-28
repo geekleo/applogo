@@ -68,23 +68,34 @@ export function IconGenerator() {
     setResults([])
 
     try {
+      console.log('[生成] 开始提交生成请求')
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 
+      console.log('[生成] API 响应状态:', response.status)
+
       if (!response.ok) {
-        throw new Error('生成失败，请稍后重试')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('[生成] API 错误:', errorData)
+        throw new Error(errorData.error || '生成失败，请稍后重试')
       }
 
       const result = await response.json()
+      console.log('[生成] 成功，generationId:', result.generationId)
+      
       setGenerationId(result.generationId)
 
-      // 开始轮询状态
-      pollGenerationStatus(result.generationId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '生成失败')
+      // 等待 1 秒后开始轮询（给后端一点时间开始处理）
+      setTimeout(() => {
+        pollGenerationStatus(result.generationId)
+      }, 1000)
+    } catch (err: any) {
+      console.error('[生成] 错误:', err)
+      setError(err.message || '生成失败')
       setIsGenerating(false)
     }
   }
@@ -93,37 +104,60 @@ export function IconGenerator() {
   const pollGenerationStatus = async (id: string) => {
     const maxAttempts = 90 // 最多等待 3 分钟
     
+    console.log('[轮询] 开始轮询 generationId:', id)
+    
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         console.log(`[轮询] 第 ${attempt + 1}/${maxAttempts} 次查询`)
         
         const response = await fetch(`/api/generate/${id}`)
+        const status = response.status
+        
+        console.log('[轮询] HTTP 状态:', status)
+        
+        if (status === 404) {
+          console.error('[轮询] 记录不存在')
+          setError('生成记录不存在')
+          setIsGenerating(false)
+          return
+        }
         
         if (!response.ok) {
-          console.error('[轮询] HTTP 错误:', response.status)
-          throw new Error(`HTTP ${response.status}`)
+          console.error('[轮询] HTTP 错误:', status)
+          // 继续轮询
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          continue
         }
         
         const data: GenerationResult = await response.json()
+        console.log('[轮询] 响应数据:', {
+          status: data.status,
+          resultsCount: data.results?.length,
+          error: data.error,
+        })
 
-        console.log('[轮询] 状态:', data.status, '结果数量:', data.results?.length)
-
-        if (data.status === 'completed' && data.results && data.results.length > 0) {
-          console.log('[轮询] ✅ 生成成功！')
-          setResults(data.results)
-          setIsGenerating(false)
-          // 滚动到结果区域
-          setTimeout(() => {
-            const el = document.getElementById('result-section')
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              el.classList.add('ring-2', 'ring-primary')
-              setTimeout(() => el.classList.remove('ring-2', 'ring-primary'), 2000)
-            }
-          }, 100)
-          return
+        // 检查是否完成
+        if (data.status === 'completed') {
+          if (data.results && data.results.length > 0) {
+            console.log('[轮询] ✅ 生成成功！结果数量:', data.results.length)
+            setResults(data.results)
+            setIsGenerating(false)
+            // 滚动到结果区域
+            setTimeout(() => {
+              const el = document.getElementById('result-section')
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                el.classList.add('ring-2', 'ring-primary')
+                setTimeout(() => el.classList.remove('ring-2', 'ring-primary'), 2000)
+              }
+            }, 100)
+            return
+          } else {
+            console.warn('[轮询] 状态为 completed 但没有结果')
+          }
         }
 
+        // 检查是否失败
         if (data.status === 'failed') {
           console.error('[轮询] ❌ 生成失败:', data.error)
           setError(data.error || '生成失败')
@@ -131,20 +165,23 @@ export function IconGenerator() {
           return
         }
 
-        // 等待 2 秒后继续轮询
+        // 继续等待
+        console.log('[轮询] 继续等待，当前状态:', data.status)
         await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (err: any) {
-        console.error('[轮询] 错误:', err.message)
-        // 继续轮询，不立即返回
+        console.error('[轮询] 异常:', err.message, err.stack)
+        // 网络错误继续轮询
         if (attempt >= maxAttempts - 1) {
           setError('生成超时，请稍后重试（可在"我的图标"中查看）')
           setIsGenerating(false)
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 2000))
         }
       }
     }
     
-    // 超时但可能已经生成成功
-    console.warn('[轮询] ⚠️ 超时，但可能已生成成功')
+    // 超时
+    console.warn('[轮询] ⚠️ 超时')
     setError('生成超时，请稍后重试（可在"我的图标"中查看）')
     setIsGenerating(false)
   }

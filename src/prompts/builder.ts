@@ -31,7 +31,7 @@ export function buildIconPrompt(
     'bold approach, distinctive design, standout version',
   ]
 
-  // 构建主 Prompt - 强调 NO TEXT
+  // 构建主 Prompt - 强调 NO TEXT + 方形图标
   const prompt = [
     // 风格前缀
     styleConfig.prefix,
@@ -43,25 +43,29 @@ export function buildIconPrompt(
     // 风格后缀
     styleConfig.suffix,
     
-    // 关键：明确要求无文字
+    // 关键：明确要求无文字 + 方形图标
     'CRITICAL: NO TEXT, NO LETTERS, NO WORDS in the icon',
     'Pure graphic design only, just the symbol',
+    'SQUARE icon with sharp corners, NO rounded corners',
+    'NO circle mask, NO rounded mask',
+    'Full square image with 90-degree corners',
     'Leave clean space for text overlay later',
     
     // 技术约束
     ...TECHNICAL_CONSTRAINTS,
+    'square format with sharp 90-degree corners',
     
     // 变体提示
     variation > 0 ? variationPrompts[variation] : '',
     
     // 最终强调
-    'Generate a single, polished app icon WITHOUT ANY TEXT',
+    'Generate a single, polished SQUARE app icon WITHOUT ANY TEXT and WITHOUT ROUNDED CORNERS',
   ]
     .filter(Boolean)
     .join('. ')
 
-  // 负面提示词 - 强调排除文字
-  const negativePrompt = `${UNIVERSAL_NEGATIVE_PROMPT}, text, letters, words, typography, font`
+  // 负面提示词 - 强调排除文字和圆角
+  const negativePrompt = `${UNIVERSAL_NEGATIVE_PROMPT}, text, letters, words, typography, font, rounded corners, circle, round, curved edges, mask`
 
   return {
     prompt,
