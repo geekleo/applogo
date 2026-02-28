@@ -6,6 +6,7 @@ import { PROMPT_STYLES, TECHNICAL_CONSTRAINTS, UNIVERSAL_NEGATIVE_PROMPT } from 
 
 /**
  * 构建图标生成 Prompt
+ * 关键：明确要求 AI 不要生成文字
  */
 export function buildIconPrompt(
   appName: string,
@@ -30,17 +31,22 @@ export function buildIconPrompt(
     'bold approach, distinctive design, standout version',
   ]
 
-  // 构建主 Prompt
+  // 构建主 Prompt - 强调 NO TEXT
   const prompt = [
     // 风格前缀
     styleConfig.prefix,
     
     // 应用信息
-    `App icon for mobile application named "${appName}"`,
+    `App icon for mobile application`,
     `App description: ${description}`,
     
     // 风格后缀
     styleConfig.suffix,
+    
+    // 关键：明确要求无文字
+    'CRITICAL: NO TEXT, NO LETTERS, NO WORDS in the icon',
+    'Pure graphic design only, just the symbol',
+    'Leave clean space for text overlay later',
     
     // 技术约束
     ...TECHNICAL_CONSTRAINTS,
@@ -49,14 +55,17 @@ export function buildIconPrompt(
     variation > 0 ? variationPrompts[variation] : '',
     
     // 最终强调
-    'Generate a single, polished app icon design',
+    'Generate a single, polished app icon WITHOUT ANY TEXT',
   ]
     .filter(Boolean)
     .join('. ')
 
+  // 负面提示词 - 强调排除文字
+  const negativePrompt = `${UNIVERSAL_NEGATIVE_PROMPT}, text, letters, words, typography, font`
+
   return {
     prompt,
-    negativePrompt: UNIVERSAL_NEGATIVE_PROMPT,
+    negativePrompt,
   }
 }
 

@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Download, Lock, Check, ArrowLeft } from 'lucide-react'
+import { Download, Lock, Check, ArrowLeft, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -44,14 +44,22 @@ export function ResultView({ generation }: ResultViewProps) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      {/* 返回按钮 */}
-      <Link
-        href="/"
-        className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        返回首页
-      </Link>
+      {/* 返回和编辑按钮 */}
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          返回首页
+        </Link>
+        <Link href={`/editor/${generation.id}`}>
+          <Button variant="outline">
+            <Edit className="mr-2 h-4 w-4" />
+            编辑图标
+          </Button>
+        </Link>
+      </div>
 
       {/* 标题信息 */}
       <div className="mb-8">
