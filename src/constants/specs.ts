@@ -48,8 +48,8 @@ export const ANDROID_SPECS: IconSpec[] = [
 
 // 微信小程序图标规格
 export const WECHAT_SPECS: IconSpec[] = [
-  { name: '小程序图标', size: 81, platform: 'wechat', mask: 'rounded' },
-  { name: '小程序图标-大', size: 120, platform: 'wechat', mask: 'rounded' },
+  { name: '小程序图标', size: 81, platform: 'wechat' },
+  { name: '小程序图标-大', size: 120, platform: 'wechat' },
   { name: '分享图', size: 500, platform: 'wechat' },
 ]
 
@@ -88,7 +88,7 @@ export const ESSENTIAL_SPECS: IconSpec[] = [
   { name: 'xxxhdpi', size: 192, platform: 'android' },
   { name: 'xxhdpi', size: 144, platform: 'android' },
   // 微信
-  { name: '小程序图标', size: 81, platform: 'wechat', mask: 'rounded' },
+  { name: '小程序图标', size: 81, platform: 'wechat' },
   // Web
   { name: 'favicon-32', size: 32, platform: 'web' },
   { name: 'apple-touch-icon', size: 180, platform: 'web' },

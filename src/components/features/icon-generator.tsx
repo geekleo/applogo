@@ -95,28 +95,37 @@ export function IconGenerator() {
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        console.log(`Poll attempt ${attempt + 1}/${maxAttempts}`)
+        console.log(`[轮询] 第 ${attempt + 1}/${maxAttempts} 次查询`)
         
         const response = await fetch(`/api/generate/${id}`)
+        
+        if (!response.ok) {
+          console.error('[轮询] HTTP 错误:', response.status)
+          throw new Error(`HTTP ${response.status}`)
+        }
+        
         const data: GenerationResult = await response.json()
 
-        console.log(`Status: ${data.status}`, data)
+        console.log('[轮询] 状态:', data.status, '结果数量:', data.results?.length)
 
-        if (data.status === 'completed') {
-          console.log('Generation completed! Results:', data.results)
+        if (data.status === 'completed' && data.results && data.results.length > 0) {
+          console.log('[轮询] ✅ 生成成功！')
           setResults(data.results)
           setIsGenerating(false)
           // 滚动到结果区域
           setTimeout(() => {
-            document.getElementById('result-section')?.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start' 
-            })
+            const el = document.getElementById('result-section')
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              el.classList.add('ring-2', 'ring-primary')
+              setTimeout(() => el.classList.remove('ring-2', 'ring-primary'), 2000)
+            }
           }, 100)
           return
         }
 
         if (data.status === 'failed') {
+          console.error('[轮询] ❌ 生成失败:', data.error)
           setError(data.error || '生成失败')
           setIsGenerating(false)
           return
@@ -125,15 +134,18 @@ export function IconGenerator() {
         // 等待 2 秒后继续轮询
         await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (err: any) {
-        console.error('Poll error:', err)
-        setError('查询状态失败：' + err.message)
-        setIsGenerating(false)
-        return
+        console.error('[轮询] 错误:', err.message)
+        // 继续轮询，不立即返回
+        if (attempt >= maxAttempts - 1) {
+          setError('生成超时，请稍后重试（可在"我的图标"中查看）')
+          setIsGenerating(false)
+        }
       }
     }
     
-    // 超时
-    setError('生成超时，请稍后重试')
+    // 超时但可能已经生成成功
+    console.warn('[轮询] ⚠️ 超时，但可能已生成成功')
+    setError('生成超时，请稍后重试（可在"我的图标"中查看）')
     setIsGenerating(false)
   }
 
